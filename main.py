@@ -1,6 +1,8 @@
 import telebot
 import sqlite3
 import constants
+import threading
+import quests
 import TextData
 from telebot import types
 
@@ -25,6 +27,16 @@ texts = TextData
 ############################################################################################################
 
 
+@bot.message_handler(commands=['test_quest'])
+def quest(message):
+    bot.send_message(message.chat.id, 'Ты отправился за покупками. В такое время может случится всякое, по этому будь на чеку.'
+                                      'У тебя есть 5 минут что б вернуться в академию. Не тормози!')
+    c_players.execute("UPDATE player SET status=2 WHERE id="+str(message.chat.id))
+    conn_players.commit()
+    threading.Timer(1,quests.shop,[message]).start()
+
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     if message.chat.type == 'private':
@@ -32,45 +44,48 @@ def start(message):
         last = c_players.fetchone()
         print(last)
         if last is None:
-            try:
-                bot.send_message(message.chat.id, 'Добро пожаловать. Выбери свою академию:', reply_markup=markup_guild)
-                c_players.execute("INSERT INTO player VALUES ('" + str(message.chat.id) + "','" + str(message.from_user.first_name) + "','1','5','0')")
-                c_stats.execute("INSERT INTO stats VALUES ('"+str(message.chat.id)+"','1','1','1','1')")
-                conn_players.commit()
-                conn_stats.commit()
-            except:
-                bot.send_message(message.chat.id, 'Ты не выбрал академию до продолжения', reply_markup=markup_guild)
+            bot.send_message(message.chat.id, 'Добро пожаловать. Выбери свою академию:', reply_markup=markup_guild)
+            c_players.execute("INSERT INTO player VALUES ('" + str(message.chat.id) + "','" + str(message.from_user.first_name) + "','1','5','0','0','1','0')")
+            c_stats.execute("INSERT INTO stats VALUES ('"+str(message.chat.id)+"','1','1','1','1')")
+            conn_players.commit()
+            conn_stats.commit()
         else:
-            bot.send_message(message.chat.id, 'Ты не выбрал академию до продолжения', reply_markup=markup_guild)
+            if last[0] == 5:
+                bot.send_message(message.chat.id, 'Ты не выбрал академию до продолжения', reply_markup=markup_guild)
+            else:
+                print('lol')
 
 
 @bot.message_handler(commands=['me'])
 def me(message):
-    c_stats.execute("SELECT * FROM stats WHERE id=" + str(message.chat.id))
-    c_players.execute("SELECT * FROM player WHERE id=" + str(message.chat.id))
-    stats = c_stats.fetchall()
-    info = c_players.fetchall()
-    stats2 = [str(x) for x in stats[0]]
-    stats3 = [str(x) for x in info[0]]
-    print(stats3)
-    print(stats2)
-    guild = 'None'
-    if stats3[4] == '1':
-        guild = '🌸Академии Сияющих Лепестков'
-    if stats3[4] == '2':
-        guild = '🛡⚔️Академии Защитников'
-    if stats3[4] == '3':
-        guild = '❄️Академии Города Инея'
-    if stats3[4] == '4':
-        guild = '🖤Академии Бездушных'
-    if stats3[4] == '5':
-        guild = '🐉Академии Города Драконов'
-    bot.send_message(message.chat.id, 'Профиль ученика ' + guild + ''
+    try:
+        c_stats.execute("SELECT * FROM stats WHERE id=" + str(message.chat.id))
+        c_players.execute("SELECT * FROM player WHERE id=" + str(message.chat.id))
+        stats = c_stats.fetchall()
+        info = c_players.fetchall()
+        stats2 = [str(x) for x in stats[0]]
+        stats3 = [str(x) for x in info[0]]
+        print(stats3)
+        print(stats2)
+        guild = 'None'
+        if stats3[4] == '1':
+            guild = '🌸Академии Сияющих Лепестков'
+        if stats3[4] == '2':
+            guild = '🛡⚔️Академии Защитников'
+        if stats3[4] == '3':
+            guild = '❄️Академии Города Инея'
+        if stats3[4] == '4':
+            guild = '🖤Академии Бездушных'
+        if stats3[4] == '5':
+            guild = '🐉Академии Города Драконов'
+        bot.send_message(message.chat.id, 'Профиль ученика ' + guild + ''
                                                                    '\nНик - ' + stats3[1] + '\n'
+                                                                                            'Уровень: '+stats3[6]+'\n'
                                                                                           'Статус -' + stats3[3] + '\n\n'
                                                                                                                  'Текущие характеристики:\n'
-                                                                                                                 'Интеллект - ' + stats2[1] + '     Сила - ' + stats2[2] + '\nЛовкость - ' + stats2[3] + '     Телосложение - ' + stats2[4], reply_markup=markup_main)
-
+                                                                                                                 'Интеллект - ' + stats2[1] + '     Сила - ' + stats2[2] + '\nЛовкость - ' + stats2[3] + '     Телосложение - ' + stats2[4] + '\n\nИнкруции: '+stats3[7]+'\nОпыт: '+stats3[5], reply_markup=markup_main)
+    except:
+        print('NONONONONONON')
 
 @bot.message_handler(commands=['change_nick'])
 def change_nick(message):
@@ -111,7 +126,7 @@ def text_handler(message):
             if status[0] == 1:
                 if message.text == 'Перемещение':
                     bot.send_message(message.chat.id, 'Выбери локацию для перемещения.', reply_markup=markup_move)
-                if message.text == 'Профиль' or '❌Отмена':
+                if message.text == 'Профиль':
                     c_stats.execute("SELECT * FROM stats WHERE id=" + str(message.chat.id))
                     c_players.execute("SELECT * FROM player WHERE id="+str(message.chat.id))
                     stats = str(c_stats.fetchall())
@@ -135,24 +150,24 @@ def text_handler(message):
                                                                                                                                                                           '\nЛовкость - '+ stats[3] + '     Телосложение - '+stats[4], reply_markup=markup_main)
             if status[0] == 5:
                 if message.text == '🌸Академия Сияющих Лепестков':
-                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!')
-                    c_players.execute("UPDATE player SET status = 1, guild = 1 WHERE id="+message.chat.id)
+                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status = 1, guild = 1 WHERE id="+str(message.chat.id))
                     conn_players.commit()
                 if message.text == '🛡⚔️Академия Защитников':
-                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!')
-                    c_players.execute("UPDATE player SET status = 1, guild = 2 WHERE id="+message.chat.id)
+                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status = 1, guild = 2 WHERE id="+str(message.chat.id))
                     conn_players.commit()
                 if message.text == '❄️Академия Города Инея':
-                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!')
-                    c_players.execute("UPDATE player SET status = 1, guild = 3 WHERE id="+message.chat.id)
+                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status = 1, guild = 3 WHERE id="+str(message.chat.id))
                     conn_players.commit()
                 if message.text == '🖤Академия Бездушных':
-                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!')
-                    c_players.execute("UPDATE player SET status = 1, guild = 4 WHERE id="+message.chat.id)
+                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status = 1, guild = 4 WHERE id="+str(message.chat.id))
                     conn_players.commit()
                 if message.text == '🐉Академия Города Драконов':
-                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!')
-                    c_players.execute("UPDATE player SET status = 1, guild = 5 WHERE id="+message.chat.id)
+                    bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status = 1, guild = 5 WHERE id="+str(message.chat.id0))
                     conn_players.commit()
         except:
             print('1')

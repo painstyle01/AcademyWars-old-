@@ -1,0 +1,22 @@
+CREATE TABLE stats(
+id INTEGER UNIQUE PRIMARY KEY,
+int INTEGER,
+str INTEGER,
+spd INTEGER,
+hp INTEGER);
+
+CREATE TABLE player(
+id INTEGER UNIQUE PRIMARY KEY,
+nick INTEGER UNIQUE,
+nick_change INTEGER,
+status INTEGER,
+guild INTEGER)
+CREATE TABLE `player` (
+	`id`	INTEGER UNIQUE,
+	`nick`	TEXT,
+	`nick_change`	INTEGER,
+	`status`	INTEGER,
+	`guild`	INTEGER,
+	`exp`	INTEGER,
+	`lvl`	INTEGER,
+	`gold`	INTEGER);
