@@ -12,13 +12,15 @@ markup_guild = types.ReplyKeyboardMarkup(True)
 markup_guild.row('🌸Академия Сияющих Лепестков', '🛡⚔️Академия Защитников')
 markup_guild.row('❄️Академия Города Инея', '🖤Академия Бездушных', '🐉Академия Города Драконов')
 markup_main = types.ReplyKeyboardMarkup(True)
-markup_main.row('Профиль', 'Квесты', 'Перемещение')
+markup_main.row('🎫Профиль', '⚙️Квесты', '🏃Перемещение')
 markup_main.row('Общение', 'Лавка академии')
 markup_move = types.ReplyKeyboardMarkup(True)
 markup_move.row('Столица', 'Арена', 'Тёмный уголок')
 markup_move.row('❄️Академия Города Инея', '🖤Академия Бездушных', '🐉Академия Города Драконов')
 markup_move.row('🌸Академия Сияющих Лепестков', '🛡⚔️Академия Защитников')
 markup_move.row('❌Отмена')
+markup_quests = types.ReplyKeyboardMarkup(True)
+markup_quests.row('🍪Поход в магазин')
 conn_players = sqlite3.connect('players.db', check_same_thread=False)
 c_players = conn_players.cursor()
 conn_stats = sqlite3.connect('stats.db',check_same_thread=False)
@@ -27,13 +29,10 @@ texts = TextData
 ############################################################################################################
 
 
-@bot.message_handler(commands=['test_quest'])
-def quest(message):
-    bot.send_message(message.chat.id, 'Ты отправился за покупками. В такое время может случится всякое, по этому будь на чеку.'
-                                      'У тебя есть 5 минут что б вернуться в академию. Не тормози!')
-    c_players.execute("UPDATE player SET status=2 WHERE id="+str(message.chat.id))
-    conn_players.commit()
-    threading.Timer(1,quests.shop,[message]).start()
+@bot.message_handler(commands=['set_lvl'])
+def new_lvl(message):
+    bot.send_message(message.chat.id, '1')
+    c_players.execute('UPDATE player SET exp = 10000 WHERE id='+str(message.chat.id))
 
 
 
@@ -53,6 +52,7 @@ def start(message):
             if last[0] == 5:
                 bot.send_message(message.chat.id, 'Ты не выбрал академию до продолжения', reply_markup=markup_guild)
             else:
+                bot.send_message(message.chat.id,'С возвращением!', reply_markup=markup_main)
                 print('lol')
 
 
@@ -117,6 +117,42 @@ def text_handler(message):
         try:
             c_players.execute("SELECT status FROM player WHERE id="+str(message.from_user.id))
             status = c_players.fetchone()
+            if message.text == '🎫Профиль':
+                c_stats.execute("SELECT * FROM stats WHERE id=" + str(message.chat.id))
+                c_players.execute("SELECT * FROM player WHERE id=" + str(message.chat.id))
+                stats = c_stats.fetchall()
+                info = c_players.fetchall()
+                stats2 = [str(x) for x in stats[0]]
+                stats3 = [str(x) for x in info[0]]
+                print(stats3)
+                print(stats2)
+                guild = 'None'
+                status = ' None'
+                if stats3[3] == '1':
+                    status = ' Свободен'
+                if stats3 == '2':
+                    status = ' Ушел в магазин'
+
+                if stats3[4] == '1':
+                    guild = '🌸Академии Сияющих Лепестков'
+                if stats3[4] == '2':
+                    guild = '🛡⚔️Академии Защитников'
+                if stats3[4] == '3':
+                    guild = '❄️Академии Города Инея'
+                if stats3[4] == '4':
+                    guild = '🖤Академии Бездушных'
+                if stats3[4] == '5':
+                    guild = '🐉Академии Города Драконов'
+                bot.send_message(message.chat.id, 'Профиль ученика ' + guild + ''
+                                                                               '\nНик - ' + stats3[1] + '\n'
+                                                                                                        'Уровень: ' +
+                                 stats3[6] + '\n'
+                                             'Статус -' + status + '\n\n'
+                                                                      'Текущие характеристики:\n'
+                                                                      'Интеллект - ' + stats2[1] + '     Сила - ' +
+                                 stats2[2] + '\nЛовкость - ' + stats2[3] + '     Телосложение - ' + stats2[
+                                     4] + '\n\nИнкруции: ' + stats3[7] + '\nОпыт: ' + stats3[5] + '/10000',
+                                 reply_markup=markup_main)
             if status[0] == 0:
                 c_players.execute("SELECT nick FROM player WHERE id="+str(message.chat.id))
                 nick = c_players.fetchone()
@@ -124,30 +160,51 @@ def text_handler(message):
                                                                                               '\nДругие академии не хотят тебя принимать.'
                                                                                               ' Вечный позор тебе.', parse_mode='HTML')
             if status[0] == 1:
-                if message.text == 'Перемещение':
-                    bot.send_message(message.chat.id, 'Выбери локацию для перемещения.', reply_markup=markup_move)
-                if message.text == 'Профиль':
+                if message.text == '❌Отмена':
                     c_stats.execute("SELECT * FROM stats WHERE id=" + str(message.chat.id))
-                    c_players.execute("SELECT * FROM player WHERE id="+str(message.chat.id))
-                    stats = str(c_stats.fetchall())
-                    info = str(c_players.fetchall())
-                    print(' '.join(stats[1:]))
-                    if info[5] == 1:
+                    c_players.execute("SELECT * FROM player WHERE id=" + str(message.chat.id))
+                    stats = c_stats.fetchall()
+                    info = c_players.fetchall()
+                    stats2 = [str(x) for x in stats[0]]
+                    stats3 = [str(x) for x in info[0]]
+                    print(stats3)
+                    print(stats2)
+                    guild = 'None'
+                    if stats3[4] == '1':
                         guild = '🌸Академии Сияющих Лепестков'
-                    if info[5] == 2:
+                    if stats3[4] == '2':
                         guild = '🛡⚔️Академии Защитников'
-                    if info[5] == 3:
+                    if stats3[4] == '3':
                         guild = '❄️Академии Города Инея'
-                    if info[5] == 4:
+                    if stats3[4] == '4':
                         guild = '🖤Академии Бездушных'
-                    if info[5] == 5:
+                    if stats3[4] == '5':
                         guild = '🐉Академии Города Драконов'
                     bot.send_message(message.chat.id, 'Профиль ученика ' + guild + ''
-                                                                                   '\nНик - '+info[1]+'\n'
-                                                                                                      'Статус -'+info[3]+'\n\n'
-                                                                                                                         'Текущие характеристики:\n'
-                                                                                                                         'Интеллект - '+ stats[1]+'     Сила - '+stats[2]+''
-                                                                                                                                                                          '\nЛовкость - '+ stats[3] + '     Телосложение - '+stats[4], reply_markup=markup_main)
+                                                                                   '\nНик - ' + stats3[1] + '\n'
+                                                                                                            'Уровень: ' +
+                                     stats3[6] + '\n'
+                                                 'Статус -' + stats3[3] + '\n\n'
+                                                                          'Текущие характеристики:\n'
+                                                                          'Интеллект - ' + stats2[1] + '     Сила - ' +
+                                     stats2[2] + '\nЛовкость - ' + stats2[3] + '     Телосложение - ' + stats2[
+                                         4] + '\n\nИнкруции: ' + stats3[7] + '\nОпыт: ' + stats3[5],
+                                     reply_markup=markup_main)
+
+                if message.text == '🏃Перемещение':
+                    bot.send_message(message.chat.id, 'На данный момент ворота академии закрыты. '
+                                                      'Следи за газетой. Наверное скоро откроют.')
+                    #bot.send_message(message.chat.id, 'Выбери локацию для перемещения.', reply_markup=markup_move)
+                if message.text == '🍪Поход в магазин':
+                    bot.send_message(message.chat.id,
+                                     'Ты отправился за покупками.'
+                                     'В такое время может случится всякое, по этому будь на чеку.'
+                                     'У тебя есть 5 минут что б вернуться в академию до темени. Не тормози!', reply_markup=markup_main)
+                    c_players.execute("UPDATE player SET status=2 WHERE id=" + str(message.chat.id))
+                    conn_players.commit()
+                    threading.Timer(1, quests.shop, [message]).start()
+                if message.text == '⚙️Квесты':
+                    bot.send_message(message.chat.id, 'Выбери один из доступных квестов:', reply_markup=markup_quests)
             if status[0] == 5:
                 if message.text == '🌸Академия Сияющих Лепестков':
                     bot.send_message(message.chat.id, 'Добро пожаловать в новую академию!', reply_markup=markup_main)

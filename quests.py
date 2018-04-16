@@ -24,3 +24,8 @@ def shop(message):
     new_exp = last2[0] + exp
     c.execute("UPDATE player SET gold = "+str(new_gold)+", exp = "+str(new_exp)+", status=1 WHERE id="+str(message.chat.id))
     db.commit()
+    if new_exp >= 10000:
+        c.execute('SELECT lvl FROM player WHERE id='+str(message.chat.id))
+        lvl = c.fetchone()
+        new_lvl = lvl[0] + 1
+        c.execute('UPDATE player SET lvl = '+str(new_lvl)+' WHERE id='+str(message.chat.id))
