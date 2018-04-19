@@ -25,6 +25,8 @@ conn_players = sqlite3.connect('players.db', check_same_thread=False)
 c_players = conn_players.cursor()
 conn_stats = sqlite3.connect('stats.db',check_same_thread=False)
 c_stats = conn_stats.cursor()
+conn_friendlist = sqlite3.connect('friends.db', check_same_thread=False)
+c_friendlist = conn_friendlist.cursor()
 texts = TextData
 ############################################################################################################
 
@@ -33,6 +35,34 @@ texts = TextData
 def new_lvl(message):
     bot.send_message(message.chat.id, '1')
     c_players.execute('UPDATE player SET exp = 10000 WHERE id='+str(message.chat.id))
+
+""""@bot.message_handler(commands=['friend'])
+def friend_list(message):
+    c_friendlist.execute('SELECT * FROM friends WHERE id='+str(message.chat.id))
+    list = c_friendlist.fetchall()
+    friends = [str(x) for x in list[0]]
+    print(friends)
+    c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[1]))
+    f1 = c_players.fetchone()
+    try:
+        print(f1)
+        if f1[0] is not None:
+            f1 = f1
+    except:
+        print('1')
+    #    f1 = '--пусто--'
+    c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[2]))
+    f2 = c_players.fetchone()
+    try:
+        print(f2)
+        if f2[0] is not None:
+            f2 = f2[0]
+    except:
+        print('2')
+    #    f1 = '--пусто--'
+    bot.send_message(message.chat.id, 'Твои друзья (максимум 10):\n'+str(f1)+'\n'+str(f2))
+"""
+
 
 
 
@@ -44,10 +74,12 @@ def start(message):
         print(last)
         if last is None:
             bot.send_message(message.chat.id, 'Добро пожаловать. Выбери свою академию:', reply_markup=markup_guild)
+            c_friendlist.execute("INSERT INTO friends VALUES ('"+str(message.chat.id)+"','0','0','0','0','0','0','0','0','0','0')")
             c_players.execute("INSERT INTO player VALUES ('" + str(message.chat.id) + "','" + str(message.from_user.first_name) + "','1','5','0','0','1','0')")
             c_stats.execute("INSERT INTO stats VALUES ('"+str(message.chat.id)+"','1','1','1','1')")
             conn_players.commit()
             conn_stats.commit()
+            conn_friendlist.commit()
         else:
             if last[0] == 5:
                 bot.send_message(message.chat.id, 'Ты не выбрал академию до продолжения', reply_markup=markup_guild)
@@ -132,7 +164,6 @@ def text_handler(message):
                     status = ' Свободен'
                 if stats3 == '2':
                     status = ' Ушел в магазин'
-
                 if stats3[4] == '1':
                     guild = '🌸Академии Сияющих Лепестков'
                 if stats3[4] == '2':
@@ -232,10 +263,89 @@ def text_handler(message):
 
 
 
+###########################COMMENTS_ZONE########################################
+
+""" #else:
+ #    f1 = f1[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[2]))
+ f2 = c_players.fetchall()
+ print(f2)
+ if f2[0] == '[]':
+     f2 = '--пусто--'
+ #else:
+ #    f2 = f2[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[3]))
+ f3 = c_players.fetchall()
+ print(f3)
+ if f3[0] == '[]':
+     f3 = '--пусто--'
+ #else:
+ #    f3 = f3[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[4]))
+ f4 = c_players.fetchall()
+ print(f4)
+ if f4[0] == '[]':
+     f4 = '--пусто--'
+ #else:
+ #   f4 = f4[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[5]))
+ f5 = c_players.fetchall()
+ print(f5)
+ if f5[0] == '[]':
+     f5 = '--пусто--'
+ #else:
+ #    f5 = f5[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[6]))
+ f6 = c_players.fetchall()
+ print(f6)
+ if f6[0] == '[]':
+     f6 = '--пусто--'
+ #else:
+ #    f6 = f6[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[7]))
+ f7 = c_players.fetchall()
+ print(f7)
+ if f7[0] == '[]':
+     f7 = '--пусто--'
+ #else:
+    # f7 = f7[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[8]))
+ f8 = c_players.fetchall()
+ print(f8)
+ if f8[0] == '':
+     f8 = '--пусто--'
+ #else:
+     #f8 = f8[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[9]))
+ f9 = c_players.fetchall()
+ print(f9)
+ if f9[0] == '[]':
+     f9 = '--пусто--'
+ #else:
+ #    f9 = f9[0]
+ c_players.execute('SELECT nick FROM player WHERE id=' + str(friends[10]))
+ f10 = c_players.fetchall()
+ print(f10)
+ if f10[0] == '[]':
+     f10 = '--пусто--'
+ #else:
+     #f10 = f10[0]"""
+
+""""+
+                     '\n'+str(f2)+
+                     '\n'+str(f3)+
+                     '\n'+str(f4)+
+                     '\n'+str(f5)+
+                     '\n'+str(f6)+
+                     '\n'+str(f7)+
+                     '\n'+str(f8)+
+                     '\n'+str(f9)+
+                     '\n'+str(f10))
+"""
+###########################COMMENTS_ZONE########################################
+
 
 try:
     bot.polling(none_stop=True)
 except:
     print('Упал')
-
-
